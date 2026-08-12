@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Managment System</title>
+    <style>
+       * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #f4f6f8;
+    padding: 20px;
+}
+
+#container {
+    max-width: 700px;
+    width: 100%;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #333;
+}
+#inputCont{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+input:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+/* Form Buttons */
+#btns {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+button {
+    flex: 1; /* Makes buttons equal size */
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#addbtn {
+    background-color: #28a745;
+    color: white;
+}
+
+#deletebtn {
+    background-color: #dc3545;
+    color: white;
+}
+#addbtn:hover,#deletebtn:hover,
+.student button:first-of-type:hover,
+.student button:last-of-type:hover{
+    opacity: .8;
+   transition: all 0.5s ease;;
+}
+
+#search {
+    margin-bottom: 15px;
+}
+
+#count {
+    font-size: 15px;
+    margin-bottom:30px;
+    color: #555;
+}
+
+/* Student Cards */
+.student {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.student h3 {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.student p {
+    color: #555;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.student button {
+    padding: 6px 12px;
+    margin-top: 8px;
+    margin-right: 5px;
+   font-size: .9rem;
+}
+
+/* Edit & Delete Buttons inside Card */
+.student button:first-of-type {
+    background-color: #ffc107;
+    color: #fff;
+
+    
+}
+
+.student button:last-of-type {
+    background-color: #dc3545;
+    color: white;
+    
+}
+label{
+    font-weight: 500;
+    color: #007bff;
+}
+.no-match {
+    color:red;
+    text-align: center;
+    padding: 15px 0;
+}
+#error{
+    text-align: center;
+    color: red;
+    font-size: .9rem;
+    margin-bottom: 1rem;
+}
+@media screen and (max-width:330px) {
+    #inputCont{
+display: flex;
+flex-direction: column;
+    }
+    
+}
+@media screen and (max-width:220px) {
+    #btns{
+display: flex;
+flex-direction: column;
+    }
+    
+}
+    </style>
+</head>
+<body>
+    <main id="container">
+        <h2>Student Managment Sytem</h2>
+        <div id="inputCont">
+            <div>
+                <label for="name">Name:</label>
+                <input type="text" id="name" placeholder="Your Name" required>
+            </div>
+              <div>
+                  <label for="id">ID:</label>
+                 <input type="text" id="id" placeholder="Your Id" required>
+              </div>
+
+             <div>
+                 <label for="age">Age:</label>
+                 <input type="number" id="age" placeholder="Your Age">
+             </div>
+
+             <div>
+                 <label for="departement">Department:</label>
+                <input type="text" id="dept" placeholder="Your Departement">
+             </div>
+        </div>
+        <div id="error"></div>
+        <div id="btns">
+            <button id="addbtn">Add Student</button>
+            <button id="deletebtn">Delete All</button>
+        </div>
+         <label for="search">Find Student:</label>
+        <input type="text" id="search" placeholder="Search by Name">
+        <h3 id="count">0</h3>
+        <div id="studentList"></div>
+
+    </main>
+
+    <script>
+  const nameInput = document.getElementById("name");
+const idInput = document.getElementById("id");
+const ageInput = document.getElementById("age");
+const deptInput = document.getElementById("dept");
+const addbtn = document.getElementById("addbtn");
+const deletebtn = document.getElementById("deletebtn");
+const searchInput = document.getElementById("search");
+const count = document.getElementById("count");
+const studentList = document.getElementById("studentList");
+const errorMsg = document.getElementById("error");
+
+let students = [];
+let editIndex = -1;
+
+// Initialize App
+savedStudents();
+displayStudents();
+countStudents();
+
+// Event Listeners
+addbtn.addEventListener("click", addStudent);
+deletebtn.addEventListener("click", deleteAllStudents);
+searchInput.addEventListener("keyup", searchStudent);
+
+function savedStudents() {
+    if (localStorage.getItem("students") !== null) {
+        students = JSON.parse(localStorage.getItem("students"));
+    }
+}
+
+function saveStudent() {
+    localStorage.setItem("students", JSON.stringify(students));
+}
+
+function addStudent() {
+    let name = nameInput.value.trim();
+    let id = idInput.value.trim();
+    let age = ageInput.value.trim();
+    let departement = deptInput.value.trim();
+
+    if (name === "" || id === "" || age === "" || departement === "") {
+        errorMsg.textContent="please, fill  all fieldes !"
+        return;
+    }
+         errorMsg.textContent="";
+    let Student = { name, id, age, departement };
+    
+    if (editIndex == -1) {
+        students.push(Student);
+    } else {
+        students[editIndex] = Student;
+        editIndex = -1;
+        addbtn.innerHTML = "Add Student";
+    }
+    
+    saveStudent();
+    displayStudents();
+    countStudents();
+    clearStudent();
+}
+function displayStudents(list = students) {
+if (list.length === 0) {
+        studentList.innerHTML = `<p class="no-match">No match found !</p>`;
+        return;
+    }
+
+
+    studentList.innerHTML = list.map((student, index) => `
+        <div class="student">
+            <h3>Name: ${student.name}</h3>
+            <p>ID: ${student.id}</p>
+            <p>Age: ${student.age}</p>
+            <p>Department: ${student.departement}</p>
+            <button onclick="editStudent(${index})">Edit</button>
+            <button onclick="deleteStudent(${index})">Delete</button>
+        </div>
+    `).join("");
+}
+
+function editStudent(index) {
+    nameInput.value = students[index].name;
+    idInput.value = students[index].id;
+    ageInput.value = students[index].age;
+    deptInput.value = students[index].departement;
+    
+    editIndex = index;
+    addbtn.innerHTML = "Update Student";
+}
+
+function searchStudent() {
+    const keyWord = searchInput.value.toLowerCase();
+    
+    const matches = students.filter(student => 
+        student.name.toLowerCase().includes(keyWord)
+    );
+  
+    displayStudents(matches);
+    
+}
+
+function deleteStudent(index) {
+    let answer = confirm(`Are you sure to delete ${students[index].name}?`);
+    if (answer == true) {
+        students.splice(index, 1);
+        saveStudent();
+        displayStudents();
+        countStudents();
+    }
+}
+
+function deleteAllStudents() {
+    let answer = confirm(`Are you sure to delete All Students?`);
+    if (answer == true) {
+        localStorage.removeItem("students"); 
+        students = [];
+        displayStudents();
+        countStudents();
+    }
+}
+
+function countStudents() {
+    count.innerHTML = "No. of Students: " + students.length;
+if(students.length===0){
+    studentList.innerHTML="";
+}
+}
+
+
+function clearStudent() {
+    nameInput.value = "";
+    idInput.value = "";
+    ageInput.value = "";
+    deptInput.value = "";
+}
+
+</script>
+</body>
+</html>
